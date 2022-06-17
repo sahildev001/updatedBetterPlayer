@@ -10,7 +10,14 @@ import 'package:wakelock/wakelock.dart';
 
 ///Widget which uses provided controller to render video player.
 class BetterPlayer extends StatefulWidget {
-  const BetterPlayer({Key? key, required this.controller}) : super(key: key);
+  const BetterPlayer({
+    Key? key,
+    required this.controller,
+    this.routePageBuilder,
+  }) : super(key: key);
+
+  /// Defines a custom RoutePageBuilder for the fullscreen
+  final BetterPlayerRoutePageBuilder? routePageBuilder;
 
   factory BetterPlayer.network(
     String url, {
@@ -201,13 +208,14 @@ class _BetterPlayerState extends State<BetterPlayer>
     final controllerProvider = BetterPlayerControllerProvider(
         controller: widget.controller, child: _buildPlayer());
 
-    final routePageBuilder = _betterPlayerConfiguration.routePageBuilder;
-    if (routePageBuilder == null) {
-      return _defaultRoutePageBuilder(
+    final routePageBuilder =
+        widget.routePageBuilder ?? _betterPlayerConfiguration.routePageBuilder;
+    if (routePageBuilder != null) {
+      return routePageBuilder(
           context, animation, secondaryAnimation, controllerProvider);
     }
 
-    return routePageBuilder(
+    return _defaultRoutePageBuilder(
         context, animation, secondaryAnimation, controllerProvider);
   }
 
