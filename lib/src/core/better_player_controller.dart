@@ -273,6 +273,7 @@ class BetterPlayerController {
     ///Process data source
     await _setupDataSource(betterPlayerDataSource);
     setTrack(BetterPlayerAsmsTrack.defaultTrack());
+    _onDataSourceUpdated();
   }
 
   ///Configure subtitles based on subtitles source.
@@ -341,6 +342,8 @@ class BetterPlayerController {
         }
       }
     }
+
+    _onDataSourceUpdated();
   }
 
   ///Setup subtitles to be displayed from given subtitle source.
@@ -1300,8 +1303,40 @@ class BetterPlayerController {
       _disposed = true;
       _controllerEventStreamController.close();
 
+      asmsTracksNotifier.dispose();
+      resolutionsNotifier.dispose();
+
       ///Delete files async
       _tempFiles.forEach((file) => file.delete());
     }
+  }
+
+  ////////////////////////////////////////////////////////////////
+  ////////  WIP FUNCTIONALITY
+  ////////  Temporary work (to be replaced with concrete/minimalist design)
+  ////////////////////////////////////////////////////////////////
+
+  final asmsTracksNotifier =
+      ValueNotifier<List<BetterPlayerAsmsTrack>>(List.empty());
+
+  final resolutionsNotifier = ValueNotifier<Map<String, String>>({});
+
+  void _onDataSourceUpdated() async {
+    _updateAsmsTracks();
+    _updateVideoResolutions();
+  }
+
+  /// Update tracks from HLS / DASH videos
+  ///
+  /// Code from [BetterPlayerControlsState]
+  void _updateAsmsTracks() {
+    asmsTracksNotifier.value = betterPlayerAsmsTracks;
+  }
+
+  /// Update resolutions from non-hls & non-dash videos
+  ///
+  /// Code from [BetterPlayerControlsState]
+  void _updateVideoResolutions() {
+    resolutionsNotifier.value = betterPlayerDataSource?.resolutions ?? {};
   }
 }
