@@ -48,6 +48,17 @@ class BetterPlayerSubtitlesSource {
     this.asmsSegments,
   });
 
+  BetterPlayerSubtitlesSource.none()
+      : this.type = BetterPlayerSubtitlesSourceType.none,
+        this.name = null,
+        this.urls = null,
+        this.content = null,
+        this.selectedByDefault = null,
+        this.headers = null,
+        this.asmsIsSegmented = null,
+        this.asmsSegmentsTime = null,
+        this.asmsSegments = null;
+
   ///Creates list with only one subtitles
   static List<BetterPlayerSubtitlesSource> single({
     BetterPlayerSubtitlesSourceType? type,
@@ -72,5 +83,9 @@ class BetterPlayerSubtitlesSource {
 extension BetterPlayerSubtitlesSourceExtension on BetterPlayerSubtitlesSource {
   String get identifier {
     return "$name-$urls";
+  }
+
+  bool get isTypeNone {
+    return type == BetterPlayerSubtitlesSourceType.none;
   }
 }
