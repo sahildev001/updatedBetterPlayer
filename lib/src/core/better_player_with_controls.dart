@@ -6,7 +6,6 @@ import 'package:better_player/src/configuration/better_player_controller_event.d
 import 'package:better_player/src/controls/better_player_cupertino_controls.dart';
 import 'package:better_player/src/controls/better_player_material_controls.dart';
 import 'package:better_player/src/core/better_player_utils.dart';
-import 'package:better_player/src/subtitles/better_player_subtitles_drawer.dart';
 import 'package:better_player/src/video_player/video_player.dart';
 import 'package:flutter/material.dart';
 
@@ -139,14 +138,18 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
           ),
           betterPlayerController.betterPlayerConfiguration.overlay ??
               Container(),
-          BetterPlayerSubtitlesDrawer(
-            betterPlayerController: betterPlayerController,
-            betterPlayerSubtitlesConfiguration: subtitlesConfiguration,
-            subtitles: betterPlayerController.subtitlesLines,
-            playerVisibilityStream: playerVisibilityStreamController.stream,
-          ),
+          /// Hides subtitle drawer; client is meant to handle this;
+          /// we will only provide a data stream for current subtitle
+          // BetterPlayerSubtitlesDrawer(
+          //   betterPlayerController: betterPlayerController,
+          //   betterPlayerSubtitlesConfiguration: subtitlesConfiguration,
+          //   subtitles: betterPlayerController.subtitlesLines,
+          //   playerVisibilityStream: playerVisibilityStreamController.stream,
+          // ),
           if (!placeholderOnTop) _buildPlaceholder(betterPlayerController),
-          _buildControls(context, betterPlayerController),
+          /// Hides controls; client is meant to handle this;
+          /// we will only provide a data stream for playback state
+          // _buildControls(context, betterPlayerController),
         ],
       ),
     );
