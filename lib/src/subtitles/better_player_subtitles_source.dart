@@ -68,3 +68,9 @@ class BetterPlayerSubtitlesSource {
         )
       ];
 }
+
+extension BetterPlayerSubtitlesSourceExtension on BetterPlayerSubtitlesSource {
+  String get identifier {
+    return "$name-$urls";
+  }
+}
