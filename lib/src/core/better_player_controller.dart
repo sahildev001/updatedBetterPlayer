@@ -1321,9 +1321,13 @@ class BetterPlayerController {
 
   final resolutionsNotifier = ValueNotifier<Map<String, String>>({});
 
+  final subtitleTracksNotifier =
+      ValueNotifier<List<BetterPlayerSubtitlesSource>>(List.empty());
+
   void _onDataSourceUpdated() async {
     _updateAsmsTracks();
     _updateVideoResolutions();
+    _updateSubtitleTracks();
   }
 
   /// Update tracks from HLS / DASH videos
@@ -1338,5 +1342,10 @@ class BetterPlayerController {
   /// Code from [BetterPlayerControlsState]
   void _updateVideoResolutions() {
     resolutionsNotifier.value = betterPlayerDataSource?.resolutions ?? {};
+  }
+
+  /// Update subtitle tracks from HLS & DASH videos
+  void _updateSubtitleTracks() {
+    subtitleTracksNotifier.value = _betterPlayerSubtitlesSourceList;
   }
 }
