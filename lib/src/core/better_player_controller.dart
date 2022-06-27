@@ -1334,7 +1334,7 @@ class BetterPlayerController {
   ///
   /// Code from [BetterPlayerControlsState]
   void _updateAsmsTracks() {
-    asmsTracksNotifier.value = betterPlayerAsmsTracks;
+    asmsTracksNotifier.value = _betterPlayerAsmsTracks.toList();
   }
 
   /// Update resolutions from non-hls & non-dash videos
@@ -1346,6 +1346,6 @@ class BetterPlayerController {
 
   /// Update subtitle tracks from HLS & DASH videos
   void _updateSubtitleTracks() {
-    subtitleTracksNotifier.value = _betterPlayerSubtitlesSourceList;
+    subtitleTracksNotifier.value = _betterPlayerSubtitlesSourceList.toList();
   }
 }
