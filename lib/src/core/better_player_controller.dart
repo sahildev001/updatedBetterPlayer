@@ -9,7 +9,9 @@ import 'package:better_player/src/video_player/video_player.dart';
 import 'package:better_player/src/video_player/video_player_platform_interface.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:wakelock/wakelock.dart';
 
 ///Class used to control overall Better Player behavior. Main class to change
 ///state of Better Player.
@@ -1347,5 +1349,47 @@ class BetterPlayerController {
   /// Update subtitle tracks from HLS & DASH videos
   void _updateSubtitleTracks() {
     subtitleTracksNotifier.value = _betterPlayerSubtitlesSourceList.toList();
+  }
+
+  Future<void> enterPresentationMode() async {
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+    final shouldAutoDetectFullScreenDeviceOrientation =
+        betterPlayerConfiguration.autoDetectFullscreenDeviceOrientation;
+    if (shouldAutoDetectFullScreenDeviceOrientation) {
+      final aspectRatio = videoPlayerController?.value.aspectRatio ?? 1.0;
+      List<DeviceOrientation> deviceOrientations;
+      if (aspectRatio < 1.0) {
+        deviceOrientations = [
+          DeviceOrientation.portraitUp,
+          DeviceOrientation.portraitDown
+        ];
+      } else {
+        deviceOrientations = [
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight
+        ];
+      }
+      await SystemChrome.setPreferredOrientations(deviceOrientations);
+    } else {
+      await SystemChrome.setPreferredOrientations(
+        betterPlayerConfiguration.deviceOrientationsOnFullScreen,
+      );
+    }
+
+    if (!betterPlayerConfiguration.allowedScreenSleep) {
+      Wakelock.enable();
+    }
+  }
+
+  Future<void> exitPresentationMode() async {
+    // The wakelock plugins checks whether it needs to perform an action internally,
+    // so we do not need to check Wakelock.isEnabled.
+    Wakelock.disable();
+
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+        overlays: betterPlayerConfiguration.systemOverlaysAfterFullScreen);
+    await SystemChrome.setPreferredOrientations(
+        betterPlayerConfiguration.deviceOrientationsAfterFullScreen);
   }
 }
