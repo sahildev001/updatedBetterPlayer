@@ -14,10 +14,13 @@ class BetterPlayer extends StatefulWidget {
     Key? key,
     required this.controller,
     this.routePageBuilder,
+    this.previewMode = false,
   }) : super(key: key);
 
   /// Defines a custom RoutePageBuilder for the fullscreen
   final BetterPlayerRoutePageBuilder? routePageBuilder;
+
+  final bool previewMode;
 
   factory BetterPlayer.network(
     String url, {
@@ -108,7 +111,7 @@ class _BetterPlayerState extends State<BetterPlayer>
     ///If somehow BetterPlayer widget has been disposed from widget tree and
     ///full screen is on, then full screen route must be pop and return to normal
     ///state.
-    if (_isFullScreen) {
+    if (!widget.previewMode && _isFullScreen) {
       Wakelock.disable();
       _navigatorState.maybePop();
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
@@ -151,6 +154,8 @@ class _BetterPlayerState extends State<BetterPlayer>
 
   // ignore: avoid_void_async
   Future<void> onFullScreenChanged() async {
+    if (widget.previewMode) return;
+
     final controller = widget.controller;
     if (controller.isFullScreen && !_isFullScreen) {
       _isFullScreen = true;
