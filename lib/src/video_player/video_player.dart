@@ -411,6 +411,18 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   }
 
   @override
+  void addListener(VoidCallback listener) {
+    if (_isDisposed) return;
+    super.addListener(listener);
+  }
+
+  @override
+  void removeListener(VoidCallback listener) {
+    if (_isDisposed) return;
+    super.removeListener(listener);
+  }
+
+  @override
   Future<void> dispose() async {
     await _creatingCompleter.future;
     if (!_isDisposed) {
