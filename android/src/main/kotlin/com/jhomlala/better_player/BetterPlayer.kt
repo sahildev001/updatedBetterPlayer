@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -32,7 +31,6 @@ import com.google.android.exoplayer2.drm.FrameworkMediaDrm
 import com.google.android.exoplayer2.drm.UnsupportedDrmException
 import com.google.android.exoplayer2.drm.DummyExoMediaDrm
 import com.google.android.exoplayer2.drm.LocalMediaDrmCallback
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ClippingMediaSource
 import com.google.android.exoplayer2.ui.PlayerNotificationManager.MediaDescriptionAdapter
@@ -42,6 +40,7 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.util.Log
 import android.view.Surface
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.Observer
 import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource
 import com.google.android.exoplayer2.source.smoothstreaming.DefaultSsChunkSource
@@ -51,13 +50,11 @@ import com.google.android.exoplayer2.source.hls.HlsMediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory
 import io.flutter.plugin.common.EventChannel.EventSink
-import androidx.media.session.MediaButtonReceiver
 import androidx.work.Data
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.audio.AudioAttributes
 import com.google.android.exoplayer2.drm.DrmSessionManagerProvider
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector.SelectionOverride
 import com.google.android.exoplayer2.trackselection.TrackSelectionOverride
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSource
@@ -214,6 +211,7 @@ internal class BetterPlayer(
                 return title
             }
 
+            @RequiresApi(Build.VERSION_CODES.M)
             @SuppressLint("UnspecifiedImmutableFlag")
             override fun createCurrentContentIntent(player: Player): PendingIntent? {
                 val packageName = context.applicationContext.packageName
@@ -408,62 +406,36 @@ internal class BetterPlayer(
             drmSessionManagerProvider = DrmSessionManagerProvider { drmSessionManager }
         }
         return when (type) {
-            C.CONTENT_TYPE_SS -> {
-                if (drmSessionManagerProvider == null) {
-                    SsMediaSource.Factory(
-                        DefaultSsChunkSource.Factory(mediaDataSourceFactory),
-                        DefaultDataSource.Factory(context, mediaDataSourceFactory)
-                    )
-                        //                        .setDrmSessionManagerProvider(drmSessionManagerProvider)
-                        .createMediaSource(mediaItem)
-                } else {
-                    SsMediaSource.Factory(
-                        DefaultSsChunkSource.Factory(mediaDataSourceFactory),
-                        DefaultDataSource.Factory(context, mediaDataSourceFactory)
-                    )
-                        .setDrmSessionManagerProvider(drmSessionManagerProvider!!)
-                        .createMediaSource(mediaItem)
+            C.CONTENT_TYPE_SS -> SsMediaSource.Factory(
+                DefaultSsChunkSource.Factory(mediaDataSourceFactory),
+                DefaultDataSource.Factory(context, mediaDataSourceFactory)
+            ).apply {
+                if (drmSessionManagerProvider != null) {
+                    setDrmSessionManagerProvider(drmSessionManagerProvider!!)
                 }
-            }
-            C.CONTENT_TYPE_DASH -> if (drmSessionManagerProvider == null) {
-                DashMediaSource.Factory(
-                    DefaultDashChunkSource.Factory(mediaDataSourceFactory),
-                    DefaultDataSource.Factory(context, mediaDataSourceFactory)
-                )
-                    //                .setDrmSessionManagerProvider(drmSessionManagerProvider)
-                    .createMediaSource(mediaItem)
-            } else {
-                DashMediaSource.Factory(
-                    DefaultDashChunkSource.Factory(mediaDataSourceFactory),
-                    DefaultDataSource.Factory(context, mediaDataSourceFactory)
-                )
-                    .setDrmSessionManagerProvider(drmSessionManagerProvider!!)
-                    .createMediaSource(mediaItem)
-            }
-            C.CONTENT_TYPE_HLS -> if (drmSessionManagerProvider == null) {
-                HlsMediaSource.Factory(mediaDataSourceFactory)
-                    //                .setDrmSessionManagerProvider(drmSessionManagerProvider)
-                    .createMediaSource(mediaItem)
-            } else {
-                HlsMediaSource.Factory(mediaDataSourceFactory)
-                    .setDrmSessionManagerProvider(drmSessionManagerProvider!!)
-                    .createMediaSource(mediaItem)
-            }
-            C.CONTENT_TYPE_OTHER -> if (drmSessionManagerProvider == null) {
-                ProgressiveMediaSource.Factory(
-                    mediaDataSourceFactory,
-                    DefaultExtractorsFactory()
-                )
-                    //                .setDrmSessionManagerProvider(drmSessionManagerProvider)
-                    .createMediaSource(mediaItem)
-            } else {
-                ProgressiveMediaSource.Factory(
-                    mediaDataSourceFactory,
-                    DefaultExtractorsFactory()
-                )
-                    .setDrmSessionManagerProvider(drmSessionManagerProvider!!)
-                    .createMediaSource(mediaItem)
-            }
+            }.createMediaSource(mediaItem)
+            C.CONTENT_TYPE_DASH -> DashMediaSource.Factory(
+                DefaultDashChunkSource.Factory(mediaDataSourceFactory),
+                DefaultDataSource.Factory(context, mediaDataSourceFactory)
+            ).apply {
+                if (drmSessionManagerProvider != null) {
+                    setDrmSessionManagerProvider(drmSessionManagerProvider!!)
+                }
+            }.createMediaSource(mediaItem)
+            C.CONTENT_TYPE_HLS -> HlsMediaSource.Factory(mediaDataSourceFactory)
+                .apply {
+                    if (drmSessionManagerProvider != null) {
+                        setDrmSessionManagerProvider(drmSessionManagerProvider!!)
+                    }
+                }.createMediaSource(mediaItem)
+            C.CONTENT_TYPE_OTHER -> ProgressiveMediaSource.Factory(
+                mediaDataSourceFactory,
+                DefaultExtractorsFactory()
+            ).apply {
+                if (drmSessionManagerProvider != null) {
+                    setDrmSessionManagerProvider(drmSessionManagerProvider!!)
+                }
+            }.createMediaSource(mediaItem)
             else -> {
                 throw IllegalStateException("Unsupported type: $type")
             }
@@ -804,8 +776,8 @@ internal class BetterPlayer(
         //Clear cache without accessing BetterPlayerCache.
         fun clearCache(context: Context?, result: MethodChannel.Result) {
             try {
-                context?.let { context ->
-                    val file = File(context.cacheDir, "betterPlayerCache")
+                context?.let {
+                    val file = File(it.cacheDir, "betterPlayerCache")
                     deleteDirectory(file)
                 }
                 result.success(null)
